@@ -100,7 +100,6 @@ def simulate_enforcement(hex_agg, target_hex_ids, n_officers=5, time_window='all
         local_displacement_rate = 0.15 + (0.25 * (carriageway_val / 100.0))
         
         displaced = suppressed * local_displacement_rate
-        total_displaced += displaced
         
         try:
             neighbors = list(h3.grid_ring(hex_id, 1))
@@ -165,12 +164,20 @@ def simulate_enforcement(hex_agg, target_hex_ids, n_officers=5, time_window='all
     # Sort spillover by impact
     spillover_hexes.sort(key=lambda x: x['displaced_violations_added'], reverse=True)
     
+    # Compute total displaced as the actual sum of spillovers added to adjacent cells
+    total_displaced = sum(
+        disp_data['displaced_violations']
+        for neighbor_id, disp_data in displacement_targets.items()
+        if neighbor_id in sim.index and neighbor_id not in target_hex_ids
+    )
+    
     # Summary metrics
     total_before_cis = sum(v['cis_score'] for v in before_state.values())
     total_after_cis = sum(v['cis_score'] for v in after_state.values())
     cis_reduction = ((total_before_cis - total_after_cis) / max(total_before_cis, 1)) * 100
     
     net_suppressed = total_suppressed - total_displaced
+    total_before_violations = sum(v['violations'] for v in before_state.values())
     
     result = {
         'input': {
@@ -189,7 +196,7 @@ def simulate_enforcement(hex_agg, target_hex_ids, n_officers=5, time_window='all
         },
         'summary': {
             'cis_reduction_pct': round(cis_reduction, 1),
-            'violation_reduction_pct': round((net_suppressed / max(total_suppressed / ENFORCEMENT_EFFECTIVENESS, 1)) * 100, 1),
+            'violation_reduction_pct': round((net_suppressed / max(total_before_violations, 1)) * 100, 1),
             'cost_effectiveness': round(cis_reduction / max(n_officers, 1), 2),
             'spillover_warning': len([s for s in spillover_hexes if s['increase_pct'] > 10]),
         },

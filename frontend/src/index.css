@@ -315,6 +315,7 @@ a:hover {
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
   transition: all var(--transition-normal);
+  min-width: 0;
 }
 
 .glass-card:hover {

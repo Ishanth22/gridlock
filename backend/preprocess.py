@@ -320,7 +320,7 @@ def compute_cis_scores(hex_agg: pd.DataFrame) -> pd.DataFrame:
         w2 * hex_agg['S_norm'] +
         w3 * hex_agg['P_norm'] +
         w4 * hex_agg['R_norm'] +
-        w5 * (hex_agg['junction_boost'] - 1.0) +  # 0 or 0.5, normalized
+        w5 * (2.0 * (hex_agg['junction_boost'] - 1.0)) +  # 0 or 1.0, normalized
         w6 * hex_agg['V_norm']
     )
 

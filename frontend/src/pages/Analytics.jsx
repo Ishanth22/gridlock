@@ -106,7 +106,7 @@ export default function Analytics() {
             <span className="glass-card-title">Actual vs Predicted (Scatter)</span>
           </div>
           <div className="chart-container-lg">
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={300}>
               <ScatterChart>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                 <XAxis
@@ -134,7 +134,7 @@ export default function Analytics() {
             <span className="glass-card-title">Feature Importance</span>
           </div>
           <div className="chart-container-lg">
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={300}>
               <BarChart
                 data={Object.entries(metrics.feature_importance).slice(0, 12).map(([name, val]) => ({
                   name: name.length > 15 ? name.substring(0, 15) : name,
@@ -185,7 +185,7 @@ export default function Analytics() {
             <span className="glass-card-title">Monthly Violation Trend</span>
           </div>
           <div className="chart-container">
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={200}>
               <LineChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                 <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} />
@@ -203,7 +203,7 @@ export default function Analytics() {
             <span className="glass-card-title">Top Violation Types</span>
           </div>
           <div className="chart-container">
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={200}>
               <BarChart data={violationData}>
                 <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#64748b', angle: -20, textAnchor: 'end' }} axisLine={false} height={50} interval={0} />
                 <YAxis tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} />

@@ -80,7 +80,7 @@ export default function HotspotDetail() {
         map.current = null;
       }
     };
-  }, [detail]);
+  }, [detail !== null]);
 
   // Update map coordinates and marker when detail changes
   useEffect(() => {
@@ -231,7 +231,7 @@ export default function HotspotDetail() {
             <span className="glass-card-title">Violation Types</span>
           </div>
           <div className="chart-container">
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={200}>
               <BarChart data={violationData} layout="vertical">
                 <XAxis type="number" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} />
                 <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} interval={0} />
@@ -251,7 +251,7 @@ export default function HotspotDetail() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, height: 100 }}>
               <div style={{ width: 100, height: 100 }}>
-                <ResponsiveContainer>
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={vehicleData} cx="50%" cy="50%" innerRadius={25} outerRadius={45} dataKey="value" stroke="none">
                       {vehicleData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
@@ -277,7 +277,7 @@ export default function HotspotDetail() {
               <span className="glass-card-title">Monthly Trend</span>
             </div>
             <div style={{ height: 80 }}>
-              <ResponsiveContainer>
+              <ResponsiveContainer width="100%" height={80}>
                 <LineChart data={monthlyData}>
                   <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#64748b' }} axisLine={false} />
                   <YAxis hide />
@@ -301,7 +301,7 @@ export default function HotspotDetail() {
             <span className="glass-card-title">Hourly Violation Pattern</span>
           </div>
           <div className="chart-container-sm">
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={150}>
               <BarChart data={hourlyData}>
                 <XAxis dataKey="hour" tick={{ fontSize: 9, fill: '#64748b' }} axisLine={false} interval={2} />
                 <YAxis hide />

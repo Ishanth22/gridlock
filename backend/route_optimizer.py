@@ -45,7 +45,7 @@ def optimize_routes(hex_agg, n_officers):
     weights = targets['cis_score'].values / targets['cis_score'].sum()
     
     kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
-    targets['zone'] = kmeans.fit_predict(coords)
+    targets['zone'] = kmeans.fit_predict(coords, sample_weight=weights)
 
     # Build zone details
     zones = []

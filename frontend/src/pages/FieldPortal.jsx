@@ -1,28 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { api } from '../utils/api';
 
 export default function FieldPortal() {
   const [alerts, setAlerts] = useState([]);
   const [clearingId, setClearingId] = useState(null);
   const [notification, setNotification] = useState(null);
   const [recentCleared, setRecentCleared] = useState([]);
+  const alertsRef = useRef([]);
+
+  useEffect(() => {
+    alertsRef.current = alerts;
+  }, [alerts]);
 
   // Fetch alerts on load and poll every 3 seconds for new dispatches
   const fetchAlerts = async (silent = false) => {
     try {
-      const res = await fetch('/api/dispatch/alerts');
-      if (res.ok) {
-        const data = await res.json();
-        
-        // Detect if a new alert was added to show a phone notification banner
-        if (!silent && alerts.length > 0 && data.length > alerts.length) {
-          const newAlert = data[0];
-          setNotification(`🚨 NEW DISPATCH: ${newAlert.type} in ${newAlert.location}`);
-          setTimeout(() => setNotification(null), 5000);
-        }
-        setAlerts(data);
+      const data = await api.getDispatchAlerts();
+      
+      // Detect if a new alert was added to show a phone notification banner
+      const prevAlerts = alertsRef.current;
+      if (!silent && prevAlerts.length > 0 && data.length > prevAlerts.length) {
+        const newAlert = data[0];
+        setNotification(`🚨 NEW DISPATCH: ${newAlert.type} in ${newAlert.location}`);
+        setTimeout(() => setNotification(null), 5000);
       }
+      setAlerts(data);
     } catch (err) {
       console.error("Failed to load dispatch alerts", err);
     }
@@ -32,17 +36,13 @@ export default function FieldPortal() {
     fetchAlerts(true);
     const interval = setInterval(() => fetchAlerts(false), 3000);
     return () => clearInterval(interval);
-  }, [alerts]);
+  }, []);
 
   const handleClear = async (hexId, alertId, location, type) => {
     setClearingId(alertId);
     try {
-      const res = await fetch('/api/incidents/clear', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hex_id: hexId }),
-      });
-      if (res.ok) {
+      const res = await api.clearIncident(hexId);
+      if (res.status === 'success') {
         // Add to recent cleared for feedback
         setRecentCleared(prev => [
           { id: alertId, location, type, clearedAt: new Date().toLocaleTimeString() },

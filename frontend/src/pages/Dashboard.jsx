@@ -62,20 +62,19 @@ export default function Dashboard() {
 
   const [weatherMode, setWeatherMode] = useState('sunny');
   const [showReportModal, setShowReportModal] = useState(false);
-  const [reportHex, setReportHex] = useState('8860145b55fffff');
+  const [reportHex, setReportHex] = useState('');
   const [reportViolation, setReportViolation] = useState('DOUBLE PARKING');
   const [reportVehicle, setReportVehicle] = useState('CAR');
   const [reportDesc, setReportDesc] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+ 
   // Sync active weather mode on mount
   useEffect(() => {
-    fetch('/api/weather')
-      .then(res => res.json())
+    api.getWeather()
       .then(data => setWeatherMode(data.weather || 'sunny'))
       .catch(console.error);
   }, []);
-
+ 
   const loadData = useCallback(() => {
     Promise.all([
       api.getOverview(),
@@ -94,40 +93,32 @@ export default function Dashboard() {
       }
     });
   }, [reportHex]);
-
+ 
   useEffect(() => {
     loadData();
   }, [loadData]);
-
+ 
   const handleWeatherChange = async (mode) => {
     setWeatherMode(mode);
     try {
-      await fetch('/api/weather', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode }),
-      });
+      await api.setWeather(mode);
       loadData();
     } catch (err) {
       console.error("Failed to update weather mode", err);
     }
   };
-
+ 
   const handleSubmitReport = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/incidents/report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          hex_id: reportHex,
-          violation_type: reportViolation,
-          vehicle_type: reportVehicle,
-          description: reportDesc,
-        }),
+      const res = await api.reportIncident({
+        hex_id: reportHex,
+        violation_type: reportViolation,
+        vehicle_type: reportVehicle,
+        description: reportDesc,
       });
-      if (res.ok) {
+      if (res.status === 'success') {
         setShowReportModal(false);
         setReportDesc('');
         loadData();
@@ -139,7 +130,7 @@ export default function Dashboard() {
       setIsSubmitting(false);
     }
   };
-
+ 
   // Initialize map
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
@@ -152,13 +143,13 @@ export default function Dashboard() {
       attributionControl: false,
     });
     map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
-
+ 
     const resizeTimer = setTimeout(() => {
       if (map.current) {
         map.current.resize();
       }
     }, 300);
-
+ 
     return () => {
       clearTimeout(resizeTimer);
       if (map.current) {
@@ -166,7 +157,7 @@ export default function Dashboard() {
         map.current = null;
       }
     };
-  }, [overview, heatmap]);
+  }, [overview !== null && heatmap !== null]);
 
   // Add heatmap layer
   useEffect(() => {
@@ -490,7 +481,7 @@ export default function Dashboard() {
               <span className="glass-card-title">Hourly Pattern</span>
             </div>
             <div className="chart-container-sm">
-              <ResponsiveContainer>
+              <ResponsiveContainer width="100%" height={150}>
                 <AreaChart data={hourlyData}>
                   <defs>
                     <linearGradient id="hourGrad" x1="0" y1="0" x2="0" y2="1">
@@ -525,7 +516,7 @@ export default function Dashboard() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{ width: 120, height: 120 }}>
-                <ResponsiveContainer>
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={vehicleData} cx="50%" cy="50%"

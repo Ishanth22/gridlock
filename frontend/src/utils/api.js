@@ -8,6 +8,18 @@ async function fetchJSON(endpoint) {
   return response.json();
 }
 
+async function postJSON(endpoint, data) {
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
+  }
+  return response.json();
+}
+
 export const api = {
   getOverview: () => fetchJSON('/api/overview'),
   getHeatmap: () => fetchJSON('/api/heatmap'),
@@ -21,12 +33,13 @@ export const api = {
   getTimelapse: () => fetchJSON('/api/timelapse'),
   getModelMetrics: () => fetchJSON('/api/model/metrics'),
   getScenarios: () => fetchJSON('/api/scenarios'),
-  simulate: (data) =>
-    fetch(`${API_BASE}/api/simulate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    }).then((r) => r.json()),
+  simulate: (data) => postJSON('/api/simulate', data),
+  getWeather: () => fetchJSON('/api/weather'),
+  setWeather: (mode) => postJSON('/api/weather', { mode }),
+  getDispatchAlerts: () => fetchJSON('/api/dispatch/alerts'),
+  addDispatchAlert: (alert) => postJSON('/api/dispatch/alerts', alert),
+  reportIncident: (report) => postJSON('/api/incidents/report', report),
+  clearIncident: (hexId) => postJSON('/api/incidents/clear', { hex_id: hexId }),
 };
 
 export function getCISColor(score) {

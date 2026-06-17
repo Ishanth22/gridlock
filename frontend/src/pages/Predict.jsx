@@ -71,7 +71,10 @@ export default function Predict() {
     map.current = new maplibregl.Map({
       container: mapContainer.current,
       style: RASTER_MAP_STYLE,
-      center: BENGALURU_CENTER, zoom: 11.5, attributionControl: false,
+      center: BENGALURU_CENTER,
+      zoom: 11.5,
+      pitch: 0,
+      attributionControl: false,
     });
     map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
 
@@ -88,16 +91,16 @@ export default function Predict() {
         map.current = null;
       }
     };
-  }, [forecast, metrics]);
+  }, [forecast !== null]);
 
-  // Add forecast hexes
+  // Add/Update forecast hexes
   useEffect(() => {
     if (!map.current || !forecast) return;
     
     let isCancelled = false;
     const onLoad = () => {
       if (isCancelled) return;
-      if (map.current.getSource('forecast')) return;
+      
       const features = forecast.predictions.map((p) => {
         const boundary = cellToBoundary(p.h3_res8, true);
         const coords = [...boundary, boundary[0]];
@@ -119,9 +122,17 @@ export default function Predict() {
         };
       });
 
+      const geojsonData = { type: 'FeatureCollection', features };
+
+      // Update hexagons source directly if it already exists
+      if (map.current.getSource('forecast')) {
+        map.current.getSource('forecast').setData(geojsonData);
+        return;
+      }
+
       map.current.addSource('forecast', {
         type: 'geojson',
-        data: { type: 'FeatureCollection', features },
+        data: geojsonData,
       });
 
       map.current.addLayer({
@@ -165,8 +176,11 @@ export default function Predict() {
       map.current.resize();
     };
 
-    if (map.current.isStyleLoaded()) onLoad();
-    else map.current.once('load', onLoad);
+    if (map.current.isStyleLoaded()) {
+      onLoad();
+    } else {
+      map.current.once('load', onLoad);
+    }
 
     return () => {
       isCancelled = true;
@@ -325,7 +339,7 @@ export default function Predict() {
                 <span className="glass-card-title">Feature Importance</span>
               </div>
               <div style={{ height: 200 }}>
-                <ResponsiveContainer>
+                <ResponsiveContainer width="100%" height={200}>
                   <BarChart
                     data={Object.entries(metrics.feature_importance).slice(0, 8).map(([name, val]) => ({
                       name: name.length > 12 ? name.substring(0, 12) : name, value: val,

@@ -106,7 +106,7 @@ export default function Enforce() {
         map.current = null;
       }
     };
-  }, [routes]);
+  }, [routes !== null]);
 
   // Clear markers on unmount
   useEffect(() => {
@@ -224,21 +224,15 @@ export default function Enforce() {
     if (!worstHex) return;
     
     try {
-      const res = await fetch('/api/dispatch/alerts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          hex_id: worstHex.hex_id,
-          location: `${zone.police_station} Sector (Hex ${worstHex.hex_id.substring(0, 8)})`,
-          type: zone.dominant_violation,
-          vehicle: zone.dominant_vehicle,
-          severity: zone.max_cis >= 80 ? 'CRITICAL' : 'HIGH',
-          description: `Patrol zone route assignment for ${zone.officer_label}. Focus clearing peak hotspot area.`
-        })
+      await api.addDispatchAlert({
+        hex_id: worstHex.hex_id,
+        location: `${zone.police_station} Sector (Hex ${worstHex.hex_id.substring(0, 8)})`,
+        type: zone.dominant_violation,
+        vehicle: zone.dominant_vehicle,
+        severity: zone.max_cis >= 80 ? 'CRITICAL' : 'HIGH',
+        description: `Patrol zone route assignment for ${zone.officer_label}. Focus clearing peak hotspot area.`
       });
-      if (res.ok) {
-        alert(`🚨 Dispatch Alert pushed to ${zone.officer_label}'s mobile view successfully!`);
-      }
+      alert(`🚨 Dispatch Alert pushed to ${zone.officer_label}'s mobile view successfully!`);
     } catch (err) {
       console.error("Failed to trigger officer dispatch", err);
     }

@@ -96,10 +96,18 @@ def train_model(agg):
     X = agg[feature_cols].fillna(0)
     y = agg['violation_count']
 
-    # Split: 80% train, 20% test
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
+    # Spatial validation split to prevent location characteristics leakage
+    unique_hexes = agg['h3_res8'].unique()
+    train_hexes, test_hexes = train_test_split(
+        unique_hexes, test_size=0.2, random_state=42
     )
+    train_mask = agg['h3_res8'].isin(train_hexes)
+    test_mask = agg['h3_res8'].isin(test_hexes)
+
+    X_train = X[train_mask]
+    y_train = y[train_mask]
+    X_test = X[test_mask]
+    y_test = y[test_mask]
 
     # LightGBM parameters
     params = {
@@ -172,7 +180,7 @@ def train_model(agg):
     return model, X, y, agg, feature_cols, metrics, X_test, y_test, y_pred
 
 
-def generate_shap_explanations(model, X, agg, feature_cols, top_n=50):
+def generate_shap_explanations(model, X, agg, feature_cols, top_n=100):
     """Generate SHAP explanations for top predicted hotspots."""
     print("[FORECAST] Generating SHAP explanations...")
 

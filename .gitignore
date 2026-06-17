@@ -1,0 +1,27 @@
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+
+# Backend
+**/__pycache__/
+**/*.pyc
+backend/venv/
+backend/.venv/
+.venv/
+venv/
+
+# Editor and OS files
+.vscode/
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Data files exceeding GitHub size limit (100MB)
+/jan to may police violation_anonymized791b166.csv

@@ -95,6 +95,22 @@ def optimize_routes(hex_agg, n_officers):
                 'coordinates': coords_list,
             })
 
+        # Greedy TSP starting from zone center
+        unvisited_hexes = list(zone_hexes.itertuples())
+        current_pt = (center_lat, center_lng)
+        patrol_route = []
+        while unvisited_hexes:
+            best_idx = 0
+            best_dist = float('inf')
+            for idx, row in enumerate(unvisited_hexes):
+                dist = np.hypot(row.lat_center - current_pt[0], row.lng_center - current_pt[1])
+                if dist < best_dist:
+                    best_dist = dist
+                    best_idx = idx
+            next_hex = unvisited_hexes.pop(best_idx)
+            patrol_route.append([round(float(next_hex.lng_center), 6), round(float(next_hex.lat_center), 6)])
+            current_pt = (next_hex.lat_center, next_hex.lng_center)
+
         # Recommended patrol schedule (based on temporal persistence)
         # Get peak hours for this zone's hexes
         peak_hours = zone_hexes['temporal_persistence'].mean()
@@ -131,6 +147,7 @@ def optimize_routes(hex_agg, n_officers):
             'shift_hours': shift_hours,
             'top_hexes': hex_list,
             'all_hexes': all_hex_coords,
+            'patrol_route': patrol_route,
             'dominant_violation': dom_violation,
             'dominant_vehicle': dom_vehicle,
             'police_station': station,

@@ -66,6 +66,8 @@ export default function Dashboard() {
   const [reportViolation, setReportViolation] = useState('DOUBLE PARKING');
   const [reportVehicle, setReportVehicle] = useState('CAR');
   const [reportDesc, setReportDesc] = useState('');
+  const [reportPlate, setReportPlate] = useState('');
+  const [warnings, setWarnings] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
  
   // Sync active weather mode on mount
@@ -81,11 +83,13 @@ export default function Dashboard() {
       api.getHeatmap(),
       api.getHotspots(10),
       api.getTimelapse(),
-    ]).then(([ov, hm, hs, tl]) => {
+      api.getWarnings(),
+    ]).then(([ov, hm, hs, tl, wn]) => {
       setOverview(ov);
       setHeatmap(hm);
       setHotspots(hs);
       setTimelapse(tl);
+      setWarnings(wn || []);
       
       // Auto-select a hotspot for reporting if none selected
       if (hs.length > 0 && !reportHex) {
@@ -117,12 +121,18 @@ export default function Dashboard() {
         violation_type: reportViolation,
         vehicle_type: reportVehicle,
         description: reportDesc,
+        license_plate: reportPlate,
       });
       if (res.status === 'success') {
         setShowReportModal(false);
         setReportDesc('');
+        setReportPlate('');
         loadData();
-        alert('📸 Public Eye Report logged successfully! Ingested into ASTraM pipeline. Automated dispatch triggered.');
+        if (res.resolved) {
+          alert(`✅ Pre-Enforcement Warning sent to owner of ${res.license_plate} (${res.owner})! Owner moved the vehicle successfully. Bottleneck cleared without officer dispatch!`);
+        } else {
+          alert(`🚨 Warning SMS ignored by owner of ${res.license_plate}! Towing dispatcher notified. Automated officer routing updated.`);
+        }
       }
     } catch (err) {
       console.error("Failed to submit citizen report", err);
@@ -447,6 +457,38 @@ export default function Dashboard() {
 
         {/* Right Sidebar */}
         <div className="dashboard-sidebar">
+          {/* VAHAN Live Warnings Log */}
+          <div className="glass-card glass-card-sm" style={{ borderColor: 'rgba(6,182,212,0.3)' }}>
+            <div className="glass-card-header">
+              <span className="glass-card-title" style={{ color: 'var(--color-ai)' }}>📢 VAHAN Pre-Enforcement Warnings</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--color-success)', fontWeight: 600 }}>{warnings.length} sent</span>
+            </div>
+            <div style={{ maxHeight: 150, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {warnings.length === 0 ? (
+                <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', padding: '12px 0' }}>
+                  No warnings dispatched yet. Submit a citizen report to test the SMS warning loop.
+                </div>
+              ) : (
+                warnings.map((w, idx) => (
+                  <div key={idx} style={{
+                    background: 'rgba(0,0,0,0.2)', padding: 8, borderRadius: 6, fontSize: '0.7rem',
+                    borderLeft: `3px solid ${w.status.includes('RESOLVED') ? '#10b981' : '#ef4444'}`
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>{w.license_plate} ({w.owner})</strong>
+                      <span style={{
+                        fontSize: '0.6rem', padding: '1px 4px', borderRadius: 3, fontWeight: 700,
+                        background: w.status.includes('RESOLVED') ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                        color: w.status.includes('RESOLVED') ? '#10b981' : '#ef4444'
+                      }}>{w.status}</span>
+                    </div>
+                    <div style={{ color: 'var(--text-secondary)', lineHeight: 1.3 }}>{w.message}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
           {/* Top Hotspots */}
           <div className="glass-card glass-card-sm">
             <div className="glass-card-header">
@@ -631,6 +673,17 @@ export default function Dashboard() {
                     <option value="LORRY/GOODS VEHICLE">Truck / Delivery Van</option>
                   </select>
                 </div>
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-tertiary)', marginBottom: 4 }}>Vehicle License Plate (optional, e.g. KA-03-ME-4829)</label>
+                <input 
+                  type="text" 
+                  value={reportPlate} 
+                  onChange={e => setReportPlate(e.target.value)}
+                  placeholder="Leave blank for automatic OCR simulation..."
+                  style={{ width: '100%', padding: 8, background: '#1f2937', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#fff', fontSize: '0.8rem' }}
+                />
               </div>
 
               <div style={{ marginBottom: 20 }}>

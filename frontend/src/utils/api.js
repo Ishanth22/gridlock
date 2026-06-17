@@ -40,6 +40,7 @@ export const api = {
   addDispatchAlert: (alert) => postJSON('/api/dispatch/alerts', alert),
   reportIncident: (report) => postJSON('/api/incidents/report', report),
   clearIncident: (hexId) => postJSON('/api/incidents/clear', { hex_id: hexId }),
+  getWarnings: () => fetchJSON('/api/warnings'),
 };
 
 export function getCISColor(score) {

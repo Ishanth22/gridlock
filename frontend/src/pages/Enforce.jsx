@@ -172,14 +172,13 @@ export default function Enforce() {
           paint: { 'line-color': zone.color, 'line-width': 1.5 },
         });
 
-        // 2. Compute and render optimized path lines
-        if (zone.all_hexes.length > 1) {
-          const pathCoords = sortCoordinatesIntoPath(zone.all_hexes, zone.center);
+        // 2. Compute and render optimized path lines (via backend TSP route coordinates)
+        if (zone.patrol_route && zone.patrol_route.length > 1) {
           map.current.addSource(`zone-route-src-${i}`, {
             type: 'geojson',
             data: {
               type: 'Feature',
-              geometry: { type: 'LineString', coordinates: pathCoords }
+              geometry: { type: 'LineString', coordinates: zone.patrol_route }
             }
           });
 

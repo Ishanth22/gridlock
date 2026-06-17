@@ -9,9 +9,69 @@ import numpy as np
 import json
 import os
 import h3
+import urllib.request
 from sklearn.cluster import KMeans
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
+CACHE_FILE = os.path.join(DATA_DIR, 'osrm_cache.json')
+
+
+def load_osrm_cache():
+    """Load cached OSRM route coordinate results to avoid redundant API hits."""
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, 'r') as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+
+def save_osrm_cache(cache):
+    """Save OSRM routes back to disk cache."""
+    try:
+        with open(CACHE_FILE, 'w') as f:
+            json.dump(cache, f)
+    except Exception as e:
+        print(f"[OSRM CACHE] Failed to write cache: {e}")
+
+
+def get_osrm_route(coords):
+    """
+    Query the public OSRM API to get the street-snapped coordinates path
+    between the given sequence of [lng, lat] coordinates.
+    Falls back to straight-line path on failure.
+    """
+    if len(coords) < 2:
+        return coords
+
+    # Create a deterministic key from rounded coords to lookup in cache
+    key = ";".join([f"{round(lng, 5)},{round(lat, 5)}" for lng, lat in coords])
+    cache = load_osrm_cache()
+    
+    if key in cache:
+        return cache[key]
+
+    coords_str = ";".join([f"{lng},{lat}" for lng, lat in coords])
+    url = f"https://router.project-osrm.org/route/v1/driving/{coords_str}?overview=full&geometries=geojson"
+    
+    print(f"[OSRM ROUTE] Fetching real road route from OSRM API for {len(coords)} nodes...")
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={'User-Agent': 'ParkSenseAI/1.0 (BTP Hackathon Routing)'}
+        )
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode())
+            if data.get("code") == "Ok" and data.get("routes"):
+                road_coords = data["routes"][0]["geometry"]["coordinates"]
+                cache[key] = road_coords
+                save_osrm_cache(cache)
+                return road_coords
+    except Exception as e:
+        print(f"[OSRM ROUTE] Failed to contact OSRM API, using straight-line fallback: {e}")
+
+    return coords
 
 
 def load_hex_data():
@@ -98,7 +158,7 @@ def optimize_routes(hex_agg, n_officers):
         # Greedy TSP starting from zone center
         unvisited_hexes = list(zone_hexes.itertuples())
         current_pt = (center_lat, center_lng)
-        patrol_route = []
+        tsp_points = [[round(float(center_lng), 6), round(float(center_lat), 6)]]
         while unvisited_hexes:
             best_idx = 0
             best_dist = float('inf')
@@ -108,8 +168,11 @@ def optimize_routes(hex_agg, n_officers):
                     best_dist = dist
                     best_idx = idx
             next_hex = unvisited_hexes.pop(best_idx)
-            patrol_route.append([round(float(next_hex.lng_center), 6), round(float(next_hex.lat_center), 6)])
+            tsp_points.append([round(float(next_hex.lng_center), 6), round(float(next_hex.lat_center), 6)])
             current_pt = (next_hex.lat_center, next_hex.lng_center)
+
+        # Retrieve real OSRM road coordinates snapped to streets
+        patrol_route = get_osrm_route(tsp_points)
 
         # Recommended patrol schedule (based on temporal persistence)
         # Get peak hours for this zone's hexes

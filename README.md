@@ -1,7 +1,24 @@
 # ParkSense AI 🌐🚗
+
+[![Tech Stack](https://img.shields.io/badge/Tech%20Stack-React%20%7C%20FastAPI%20%7C%20Python%20%7C%20MapLibre-blueviolet)](https://github.com/Ishanth22/gridlock)
+[![Python Version](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
+[![Node Version](https://img.shields.io/badge/Node-v18%2B-green)](https://nodejs.org/)
+[![Performance](https://img.shields.io/badge/OSRM%20Routing-Sub--5ms-orange)](https://github.com/Ishanth22/gridlock)
+[![Pitch Deck](https://img.shields.io/badge/Presentation-Widescreen%20PPTX-red)](parksense_pitch_deck.pptx)
+[![Demo Video](https://img.shields.io/badge/Demo%20Video-MP4%20Walkthrough-success)](parksense_demo.mp4)
+
 > **Bengaluru Traffic Police (BTP) Congestion Intelligence Platform**
 > 
 > *ParkSense AI* is a premium, end-to-end, AI-powered system designed to analyze, predict, and mitigate traffic congestion caused by illegal parking violations in Bengaluru. The platform features real-time spatial ingestion, LightGBM risk forecasting, SHAP explainability, live CCTV computer vision simulation, automated owner warning dispatches, dynamic route optimization, and closed-loop clearance feedback.
+
+---
+
+## 📽️ Demo Video & Pitch Deck
+
+To make reviewing our national-level submission as frictionless as possible, our pitch assets are embedded directly within this repository:
+
+- **🎥 Demo Video Walkthrough**: [parksense_demo.mp4](parksense_demo.mp4) *(Watch the full 60-second end-to-end system demo)*
+- **📊 Presentation Pitch Deck**: [parksense_pitch_deck.pptx](parksense_pitch_deck.pptx) *(A premium slate-900 glassmorphic pitch slide deck)*
 
 ---
 

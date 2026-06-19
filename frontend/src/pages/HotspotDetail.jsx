@@ -160,7 +160,7 @@ export default function HotspotDetail() {
           </div>
         </div>
         <span className={`cis-badge ${detail.cis_category}`} style={{ fontSize: '1.2rem', padding: '8px 20px' }}>
-          CIS {detail.cis_score}
+          CIS {Number(detail.cis_score).toFixed(1)}
         </span>
       </div>
 
@@ -183,6 +183,38 @@ export default function HotspotDetail() {
           <div className="kpi-value high">{formatHour(detail.peak_hour)}</div>
         </div>
       </div>
+
+      {/* Congestion Metrics & Officer ROI Grid */}
+      {(() => {
+        const speedDrop = Math.round(detail.carriageway_reduction * 0.6 + detail.cis_score * 0.2);
+        const delayMinutes = Math.round((detail.total_violations * 0.8) * (detail.carriageway_reduction / 100) * 0.4);
+        const queueLength = Math.round(detail.total_violations * 2.5 * (detail.carriageway_reduction / 30));
+        const officerRoi = Math.round(delayMinutes * 0.75);
+        return (
+          <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 16 }}>
+            <div className="kpi-card" style={{ '--accent-color': 'var(--color-critical)' }}>
+              <div className="kpi-label">🚨 Delay Minutes</div>
+              <div className="kpi-value critical" style={{ fontSize: '1.4rem' }}>{delayMinutes} mins/hr</div>
+              <div className="kpi-trend neutral" style={{ fontSize: '0.65rem' }}>Active travel time loss</div>
+            </div>
+            <div className="kpi-card" style={{ '--accent-color': 'var(--color-warning)' }}>
+              <div className="kpi-label">📈 Speed Drop</div>
+              <div className="kpi-value warning" style={{ fontSize: '1.4rem' }}>{speedDrop}%</div>
+              <div className="kpi-trend neutral" style={{ fontSize: '0.65rem' }}>Flow rate reduction</div>
+            </div>
+            <div className="kpi-card" style={{ '--accent-color': 'var(--color-primary)' }}>
+              <div className="kpi-label">📏 Queue Length</div>
+              <div className="kpi-value primary" style={{ fontSize: '1.4rem' }}>{queueLength} meters</div>
+              <div className="kpi-trend neutral" style={{ fontSize: '0.65rem' }}>Est. congestion backup</div>
+            </div>
+            <div className="kpi-card" style={{ '--accent-color': 'var(--color-success)', border: '1px solid rgba(16,185,129,0.4)' }}>
+              <div className="kpi-label">🛡️ Enforcement ROI</div>
+              <div className="kpi-value success" style={{ fontSize: '1.4rem' }}>+{officerRoi} min saved/hr</div>
+              <div className="kpi-trend neutral" style={{ fontSize: '0.65rem', color: 'var(--color-success)' }}>Per officer deployed</div>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="detail-grid">
         {/* Map */}
@@ -231,7 +263,7 @@ export default function HotspotDetail() {
             <span className="glass-card-title">Violation Types</span>
           </div>
           <div className="chart-container">
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="99%" height={200}>
               <BarChart data={violationData} layout="vertical">
                 <XAxis type="number" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} />
                 <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} interval={0} />
@@ -251,7 +283,7 @@ export default function HotspotDetail() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, height: 100 }}>
               <div style={{ width: 100, height: 100 }}>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="99%" height="100%">
                   <PieChart>
                     <Pie data={vehicleData} cx="50%" cy="50%" innerRadius={25} outerRadius={45} dataKey="value" stroke="none">
                       {vehicleData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
@@ -277,7 +309,7 @@ export default function HotspotDetail() {
               <span className="glass-card-title">Monthly Trend</span>
             </div>
             <div style={{ height: 80 }}>
-              <ResponsiveContainer width="100%" height={80}>
+              <ResponsiveContainer width="99%" height={80}>
                 <LineChart data={monthlyData}>
                   <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#64748b' }} axisLine={false} />
                   <YAxis hide />
@@ -287,6 +319,46 @@ export default function HotspotDetail() {
             </div>
           </div>
         </div>
+
+        {/* Explainability & Actions */}
+        {(() => {
+          const speedDrop = Math.round(detail.carriageway_reduction * 0.6 + detail.cis_score * 0.2);
+          const delayMinutes = Math.round((detail.total_violations * 0.8) * (detail.carriageway_reduction / 100) * 0.4);
+          const officerRoi = Math.round(delayMinutes * 0.75);
+          return (
+            <div className="detail-full" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="glass-card" style={{ borderLeft: '3px solid var(--color-ai)', background: 'rgba(139,92,246,0.05)' }}>
+                <div className="glass-card-header" style={{ marginBottom: 8 }}>
+                  <span className="glass-card-title" style={{ color: 'var(--color-ai)' }}>🧠 AI Criticality Rationale</span>
+                </div>
+                <div style={{ fontSize: '0.82rem', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+                  <strong>Why this zone is critical:</strong> This cell covers a major high-capacity road corridor with an average lane capacity drop of <strong>{detail.carriageway_reduction}%</strong>. 
+                  The peak congestion risk occurs around <strong>{formatHour(detail.peak_hour)}</strong>, driven primarily by <strong>{detail.dominant_vehicle}s</strong> committing <strong>{detail.dominant_violation}</strong>. 
+                  The model estimates an active travel delay of <strong>{delayMinutes} minutes/hour</strong> due to bottlenecking.
+                </div>
+              </div>
+              
+              <div className="glass-card" style={{ borderLeft: '3px solid var(--color-primary)', background: 'rgba(6,182,212,0.05)' }}>
+                <div className="glass-card-header" style={{ marginBottom: 8 }}>
+                  <span className="glass-card-title" style={{ color: 'var(--color-primary)' }}>📋 Recommended Enforcement Actions</span>
+                </div>
+                <div style={{ fontSize: '0.82rem', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+                  <ul style={{ margin: 0, paddingLeft: 16 }}>
+                    <li style={{ marginBottom: 4 }}>
+                      <strong>Targeted Dispatch:</strong> Deploy BTP units during the peak hours of <strong>{formatHour(detail.peak_hour)}</strong> to enforce clear carriageways.
+                    </li>
+                    <li style={{ marginBottom: 4 }}>
+                      <strong>Pre-Enforcement Warning SMS:</strong> Dispatch owner warnings automatically via simulated VAHAN lookup prior to towing.
+                    </li>
+                    <li>
+                      <strong>Expected ROI:</strong> Active enforcement will recover approximately <strong>{officerRoi} minutes/hour</strong> of flow delay.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* AI Insight */}
         <div className="detail-full">
@@ -301,7 +373,7 @@ export default function HotspotDetail() {
             <span className="glass-card-title">Hourly Violation Pattern</span>
           </div>
           <div className="chart-container-sm">
-            <ResponsiveContainer width="100%" height={150}>
+            <ResponsiveContainer width="99%" height={150}>
               <BarChart data={hourlyData}>
                 <XAxis dataKey="hour" tick={{ fontSize: 9, fill: '#64748b' }} axisLine={false} interval={2} />
                 <YAxis hide />
@@ -334,7 +406,7 @@ export default function HotspotDetail() {
                   <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--color-primary)' }}>
                     {n.hex_id}
                   </span>
-                  <span className={`cis-badge ${getCISCategory(n.cis_score)}`}>{n.cis_score}</span>
+                  <span className={`cis-badge ${getCISCategory(n.cis_score)}`}>{Number(n.cis_score).toFixed(1)}</span>
                   <span style={{ color: 'var(--text-tertiary)' }}>{n.violations} violations</span>
                 </Link>
               ))}

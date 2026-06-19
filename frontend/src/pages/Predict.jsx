@@ -251,7 +251,7 @@ export default function Predict() {
             <div className="glass-card glass-card-sm">
               <div className="glass-card-header">
                 <span className="glass-card-title">Selected Prediction</span>
-                <span className={`cis-badge ${getCISCategory(selectedHex.cis)}`}>{selectedHex.cis}</span>
+                <span className={`cis-badge ${getCISCategory(selectedHex.cis)}`}>{Number(selectedHex.cis || 0).toFixed(1)}</span>
               </div>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 8 }}>
                 {selectedHex.station}
@@ -339,7 +339,7 @@ export default function Predict() {
                 <span className="glass-card-title">Feature Importance</span>
               </div>
               <div style={{ height: 200 }}>
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="99%" height={200}>
                   <BarChart
                     data={Object.entries(metrics.feature_importance).slice(0, 8).map(([name, val]) => ({
                       name: name.length > 12 ? name.substring(0, 12) : name, value: val,

@@ -231,11 +231,18 @@ export default function Dashboard() {
       // Popup on click
       map.current.on('click', 'hex-fill', (e) => {
         const props = e.features[0].properties;
+        const speedDrop = Math.round(props.carriageway_reduction * 0.6 + props.cis_score * 0.2);
+        const delayMinutes = Math.round((props.total_violations * 0.8) * (props.carriageway_reduction / 100) * 0.4);
+        const queueLength = Math.round(props.total_violations * 2.5 * (props.carriageway_reduction / 30));
+
         const html = `
           <div class="popup-title">${props.location_name?.substring(0, 60) || 'Unknown'}</div>
           <div class="popup-row"><span class="popup-label">CIS Score</span><span class="popup-value" style="color:${getCISColor(props.cis_score)}">${props.cis_score}</span></div>
           <div class="popup-row"><span class="popup-label">Violations</span><span class="popup-value">${props.total_violations}</span></div>
           <div class="popup-row"><span class="popup-label">Carriageway</span><span class="popup-value">-${props.carriageway_reduction}%</span></div>
+          <div class="popup-row"><span class="popup-label">Delay min/hr</span><span class="popup-value">${delayMinutes} min</span></div>
+          <div class="popup-row"><span class="popup-label">Speed Drop</span><span class="popup-value">${speedDrop}%</span></div>
+          <div class="popup-row"><span class="popup-label">Queue Length</span><span class="popup-value">${queueLength}m</span></div>
           <div class="popup-row"><span class="popup-label">Type</span><span class="popup-value" style="font-size:0.7rem">${props.dominant_violation}</span></div>
           <div class="popup-row"><span class="popup-label">Station</span><span class="popup-value">${props.police_station}</span></div>
           <div style="margin-top:8px">
@@ -459,9 +466,12 @@ export default function Dashboard() {
         <div className="dashboard-sidebar">
           {/* VAHAN Live Warnings Log */}
           <div className="glass-card glass-card-sm" style={{ borderColor: 'rgba(6,182,212,0.3)' }}>
-            <div className="glass-card-header">
-              <span className="glass-card-title" style={{ color: 'var(--color-ai)' }}>📢 VAHAN Pre-Enforcement Warnings</span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--color-success)', fontWeight: 600 }}>{warnings.length} sent</span>
+            <div className="glass-card-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                <span className="glass-card-title" style={{ color: 'var(--color-ai)' }}>📢 VAHAN Pre-Enforcement Warnings</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--color-success)', fontWeight: 600 }}>{warnings.length} sent</span>
+              </div>
+              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>[Simulated VAHAN Workflow - No real SMS cost]</span>
             </div>
             <div style={{ maxHeight: 150, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
               {warnings.length === 0 ? (
@@ -523,7 +533,7 @@ export default function Dashboard() {
               <span className="glass-card-title">Hourly Pattern</span>
             </div>
             <div className="chart-container-sm">
-              <ResponsiveContainer width="100%" height={150}>
+              <ResponsiveContainer width="99%" height={150}>
                 <AreaChart data={hourlyData}>
                   <defs>
                     <linearGradient id="hourGrad" x1="0" y1="0" x2="0" y2="1">
@@ -558,7 +568,7 @@ export default function Dashboard() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{ width: 120, height: 120 }}>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="99%" height="100%">
                   <PieChart>
                     <Pie
                       data={vehicleData} cx="50%" cy="50%"

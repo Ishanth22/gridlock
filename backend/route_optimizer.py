@@ -266,8 +266,8 @@ def main():
 
     hex_agg = load_hex_data()
 
-    # Pre-compute for multiple officer counts
-    officer_counts = [3, 5, 8, 10, 15, 20]
+    # Pre-compute for multiple officer counts (1 to 20) to ensure instant responses
+    officer_counts = list(range(1, 21))
     
     for n in officer_counts:
         print(f"\n  Optimizing for {n} officers...")

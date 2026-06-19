@@ -30,11 +30,11 @@ def load_ml_data():
 
 
 def prepare_features(df):
-    """Create aggregated features at H3 hex × hour-of-week level."""
+    """Create aggregated features at H3 hex × hour-of-week × week level."""
     print("[FORECAST] Preparing features...")
 
-    # Aggregate: count violations per hex × hour × day_of_week
-    agg = df.groupby(['h3_res8', 'hour', 'day_of_week']).agg(
+    # Aggregate: count violations per hex × hour × day_of_week × week
+    agg = df.groupby(['h3_res8', 'hour', 'day_of_week', 'week']).agg(
         violation_count=('severity_score', 'count'),
         avg_severity=('severity_score', 'mean'),
         avg_lane_blockage=('lane_blockage_pct', 'mean'),
@@ -96,13 +96,18 @@ def train_model(agg):
     X = agg[feature_cols].fillna(0)
     y = agg['violation_count']
 
-    # Spatial validation split to prevent location characteristics leakage
-    unique_hexes = agg['h3_res8'].unique()
-    train_hexes, test_hexes = train_test_split(
-        unique_hexes, test_size=0.2, random_state=42
-    )
-    train_mask = agg['h3_res8'].isin(train_hexes)
-    test_mask = agg['h3_res8'].isin(test_hexes)
+    # Temporal validation split to prevent data leakage (training on weeks < 52, validating on week 52)
+    train_mask = agg['week'] < 52
+    test_mask = agg['week'] == 52
+    
+    # Fallback to random split if week 52 data is empty
+    if train_mask.sum() == 0 or test_mask.sum() == 0:
+        unique_hexes = agg['h3_res8'].unique()
+        train_hexes, test_hexes = train_test_split(
+            unique_hexes, test_size=0.2, random_state=42
+        )
+        train_mask = agg['h3_res8'].isin(train_hexes)
+        test_mask = agg['h3_res8'].isin(test_hexes)
 
     X_train = X[train_mask]
     y_train = y[train_mask]
@@ -139,8 +144,8 @@ def train_model(agg):
     rmse = np.sqrt(mean_squared_error(y_test, y_pred))
     r2 = r2_score(y_test, y_pred)
 
-    # Classification metrics (is it a hotspot? threshold = median)
-    threshold = y.median()
+    # Classification metrics (is it a hotspot? threshold = 15.0 violations/hour cumulative)
+    threshold = 15.0
     y_test_cls = (y_test > threshold).astype(int)
     y_pred_cls = (y_pred > threshold).astype(int)
 
@@ -280,15 +285,19 @@ def generate_forecast_predictions(model, agg, feature_cols):
     """Generate next-period hotspot predictions per hex cell."""
     print("[FORECAST] Generating forecast predictions...")
 
-    # Predict for all hex × hour-of-week combinations
-    X_all = agg[feature_cols].fillna(0)
-    agg['predicted_count'] = np.maximum(model.predict(X_all), 0)
+    # Predict for the latest week's context (e.g. week 52) to forecast the next future period
+    latest_week_agg = agg[agg['week'] == 52].copy()
+    if len(latest_week_agg) == 0:
+        latest_week_agg = agg.copy() # Fallback if week 52 is empty
+
+    X_all = latest_week_agg[feature_cols].fillna(0)
+    latest_week_agg['predicted_count'] = np.maximum(model.predict(X_all), 0)
 
     # Aggregate predictions per hex
-    hex_forecast = agg.groupby('h3_res8').agg(
+    hex_forecast = latest_week_agg.groupby('h3_res8').agg(
         predicted_total=('predicted_count', 'sum'),
         predicted_peak=('predicted_count', 'max'),
-        peak_hour=('predicted_count', lambda x: agg.loc[x.idxmax(), 'hour'] if len(x) > 0 else 0),
+        peak_hour=('predicted_count', lambda x: latest_week_agg.loc[x.idxmax(), 'hour'] if len(x) > 0 else 0),
         actual_total=('violation_count', 'sum'),
     ).reset_index()
 

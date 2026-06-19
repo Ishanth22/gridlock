@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import HotspotDetail from './pages/HotspotDetail';
 import Predict from './pages/Predict';
+import CctvMonitor from './pages/CctvMonitor';
 import Enforce from './pages/Enforce';
 import Simulate from './pages/Simulate';
 import Analytics from './pages/Analytics';
@@ -16,6 +17,7 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/hotspot/:hexId" element={<HotspotDetail />} />
           <Route path="/predict" element={<Predict />} />
+          <Route path="/cctv" element={<CctvMonitor />} />
           <Route path="/enforce" element={<Enforce />} />
           <Route path="/simulate" element={<Simulate />} />
           <Route path="/analytics" element={<Analytics />} />

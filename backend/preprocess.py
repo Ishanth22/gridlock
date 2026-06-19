@@ -385,8 +385,8 @@ def compute_hotspot_details(df: pd.DataFrame, hex_agg: pd.DataFrame) -> dict:
     """Compute detailed breakdown per hotspot for the deep-dive page."""
     print("[7/8] Computing hotspot details...")
 
-    # Top 100 hotspots by CIS score
-    top_hexes = hex_agg.nlargest(100, 'cis_score')['h3_res8'].tolist()
+    # Compute details for all hexes to prevent drilldown 404s
+    top_hexes = hex_agg['h3_res8'].tolist()
     details = {}
 
     for hex_id in top_hexes:

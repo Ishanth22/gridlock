@@ -1,14 +1,21 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import DemoTour from './DemoTour';
 
 const navItems = [
-  { path: '/', icon: '\u2302', label: 'Command Center' },
-  { path: '/predict', icon: '\u26A1', label: 'Predictive Intel' },
-  { path: '/enforce', icon: '\u2691', label: 'Enforce Optimizer' },
-  { path: '/simulate', icon: '\u2699', label: 'What-If Simulator' },
-  { path: '/analytics', icon: '\u2261', label: 'Analytics & ML' },
+  { path: '/', icon: '🏠', label: 'Command Center' },
+  { path: '/predict', icon: '⚡', label: 'Predictive Intel' },
+  { path: '/cctv', icon: '📹', label: 'CCTV Monitor' },
+  { path: '/enforce', icon: '🏳️', label: 'Enforce Optimizer' },
+  { path: '/simulate', icon: '⚙️', label: 'What-If Simulator' },
+  { path: '/analytics', icon: '📊', label: 'Analytics & ML' },
 ];
 
 export default function Layout() {
+  const startDemo = () => {
+    sessionStorage.setItem('gridlock_demo_step', '1');
+    window.location.hash = ''; // reset hash if any
+  };
+
   return (
     <div className="app-layout">
       <aside className="sidebar">
@@ -34,6 +41,33 @@ export default function Layout() {
               <span>{item.label}</span>
             </NavLink>
           ))}
+          
+          <div className="sidebar-section-label" style={{ marginTop: '12px' }}>
+            Interactive Demo
+          </div>
+          <button
+            onClick={startDemo}
+            className="nav-item"
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              background: 'linear-gradient(135deg, var(--color-primary-dim), var(--color-ai-dim))',
+              border: '1px solid var(--color-primary)',
+              borderRadius: '6px',
+              color: 'var(--color-primary)',
+              fontWeight: 700,
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              textAlign: 'center'
+            }}
+          >
+            <span>⚡ Start Demo Tour</span>
+          </button>
+
           <div className="sidebar-section-label" style={{ marginTop: '16px' }}>
             System
           </div>
@@ -70,6 +104,7 @@ export default function Layout() {
       <main className="main-content">
         <Outlet />
       </main>
+      <DemoTour />
     </div>
   );
 }
